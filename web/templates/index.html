@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surveillance System - Computer Vision Surveillance with AI Detection</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <img src="/static/assets/logo.svg" alt="surveillance-system" class="logo">
+                <div class="header-title">
+                    <h1>Surveillance System</h1>
+                    <p>Computer Vision Surveillance with AI Detection</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <a href="/camera" class="camera-button">Open Camera Wall</a>
+                <div class="date-time">
+                    <div class="current-date" id="current-date">--</div>
+                    <div class="current-time" id="current-time">--:--:--</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="total-cameras">0</div>
+                <div class="stat-label">Active Cameras</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-identified">0</div>
+                <div class="stat-label">Identified</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-unidentified">0</div>
+                <div class="stat-label">Unidentified</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Recent Detections</h2>
+            <div class="people-grid" id="people-grid">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Camera Status</h2>
+            <div class="people-grid" id="cameras-grid">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <div class="section events-section">
+            <div class="events-header" onclick="toggleEvents()">
+                <h2>Detection History</h2>
+                <span class="toggle-icon" id="toggle-icon">▼</span>
+            </div>
+            <div class="events-content" id="events-content">
+                <div class="events-list" id="events-list">
+                    <div class="loading">Loading events...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateDateTime() {
+            const now = new Date();
+            
+            const dateOptions = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            const dateStr = now.toLocaleDateString('en-GB', dateOptions);
+            document.getElementById('current-date').textContent = 
+                dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+            
+            const timeStr = now.toLocaleTimeString('en-GB', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+            document.getElementById('current-time').textContent = timeStr;
+        }
+
+        function toggleEvents() {
+            const content = document.getElementById('events-content');
+            const icon = document.getElementById('toggle-icon');
+            
+            content.classList.toggle('expanded');
+            icon.classList.toggle('rotated');
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('en-GB', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+
+        async function loadPeople() {
+            try {
+                const response = await fetch('/api/people/detected');
+                const people = await response.json();
+                
+                const grid = document.getElementById('people-grid');
+                
+                if (people.length === 0) {
+                    grid.innerHTML = '<div class="loading">No detections today</div>';
+                    return;
+                }
+                
+                // Display people cards with cooldown visual
+                grid.innerHTML = people.map(person => `
+                    <div class="person-card ${person.in_cooldown ? 'inside' : ''}">
+                        <div class="person-photo">
+                            <img src="${person.photo_path}" alt="${person.name}" 
+                                 style="${!person.in_cooldown ? 'filter: grayscale(100%); opacity: 0.6;' : ''}">
+                        </div>
+                        <div class="person-name">${person.name}</div>
+                        <div class="person-status">
+                            ${person.in_cooldown ? 'Recently detected' : 'Eligible for re-detection'}
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading people:', error);
+                document.getElementById('people-grid').innerHTML = 
+                    '<div class="loading">Failed to load data</div>';
+            }
+        }
+
+        async function loadCameras() {
+            try {
+                const response = await fetch('/api/cameras/detections');
+                const cameras = await response.json();
+                
+                const grid = document.getElementById('cameras-grid');
+                
+                if (cameras.length === 0) {
+                    grid.innerHTML = '<div class="loading">No cameras configured</div>';
+                    document.getElementById('total-cameras').textContent = '0';
+                    document.getElementById('total-identified').textContent = '0';
+                    document.getElementById('total-unidentified').textContent = '0';
+                    return;
+                }
+                
+                // Calculate totals
+                let totalIdentified = 0;
+                let totalUnidentified = 0;
+                let activeCameras = 0;
+                
+                cameras.forEach(camera => {
+                    totalIdentified += camera.identified || 0;
+                    totalUnidentified += camera.unidentified || 0;
+                    if (camera.status === 'active') activeCameras++;
+                });
+                
+                // Update stats
+                document.getElementById('total-cameras').textContent = activeCameras;
+                document.getElementById('total-identified').textContent = totalIdentified;
+                document.getElementById('total-unidentified').textContent = totalUnidentified;
+                
+                // Display camera cards
+                grid.innerHTML = cameras.map(camera => `
+                    <div class="person-card ${camera.status === 'active' ? 'inside' : ''}">
+                        <div class="person-name" style="font-size: 1.1em; margin-bottom: 8px; font-weight: 500;">
+                            ${camera.name}
+                        </div>
+                        <div class="person-status" style="text-align: left; line-height: 1.6;">
+                            <div><strong>Identified:</strong> ${camera.identified}</div>
+                            <div><strong>Unidentified:</strong> ${camera.unidentified}</div>
+                            <div><strong>Total:</strong> ${camera.total}</div>
+                            <div style="margin-top: 6px; font-size: 0.9em; color: #666;">
+                                ${camera.status === 'active' ? 'Online' : 'Offline'} | ${camera.fps} FPS
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading cameras:', error);
+                document.getElementById('cameras-grid').innerHTML = 
+                    '<div class="loading">Failed to load camera data</div>';
+            }
+        }
+
+        async function loadEvents() {
+            try {
+                const response = await fetch('/api/events');
+                const events = await response.json();
+                
+                const list = document.getElementById('events-list');
+                
+                if (events.length === 0) {
+                    list.innerHTML = '<div class="loading">No events recorded today</div>';
+                    return;
+                }
+                
+                list.innerHTML = events.map(event => `
+                    <div class="event-item">
+                        <div class="event-info">
+                            <span class="event-type ${event.event_type}">
+                                Detection
+                            </span>
+                            <span class="event-name">${event.person}</span>
+                        </div>
+                        <div class="event-details">
+                            <span>${formatTime(event.timestamp)}</span>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading events:', error);
+                document.getElementById('events-list').innerHTML = 
+                    '<div class="loading">Failed to load events</div>';
+            }
+        }
+
+        function loadData() {
+            loadPeople();
+            loadCameras();
+            loadEvents();
+        }
+
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+        
+        loadData();
+        setInterval(loadData, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">surveillance-system Logo</title>
+  <desc id="desc">Geometric shield and eye mark representing monitoring and intelligence.</desc>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1769aa"/>
+      <stop offset="100%" stop-color="#1f8a63"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="24" fill="#0f1e2f"/>
+  <path d="M64 20L98 34V61c0 26-18 39-34 47C48 100 30 87 30 61V34l34-14z" fill="url(#g)"/>
+  <ellipse cx="64" cy="64" rx="22" ry="13" fill="#f2f7fb"/>
+  <circle cx="64" cy="64" r="7" fill="#0f1e2f"/>
+</svg>

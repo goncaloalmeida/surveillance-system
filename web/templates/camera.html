@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Wall - Surveillance System</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <img src="/static/assets/logo.svg" alt="Logo" class="logo">
+                <div class="header-title">
+                    <h1>Live Camera Wall</h1>
+                    <p>Surveillance System</p>
+                </div>
+            </div>
+            <a href="/" class="back-button">Back to Dashboard</a>
+        </div>
+
+        <div class="camera-section">
+            <h2>
+                Active Streams
+                <span class="detection-badge">Detection Active</span>
+            </h2>
+
+            <div class="stats-bar">
+                <div class="stat-box">
+                    <div class="number" id="totalPeople">0</div>
+                    <div class="label">Total People</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number status-inactive" id="activeCameras">0</div>
+                    <div class="label">Active Cameras</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number" id="avgFps">--</div>
+                    <div class="label">Average FPS</div>
+                </div>
+            </div>
+
+            <div class="cameras-grid" id="camerasGrid">
+                <!-- Camera cards are injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cameras = [];
+
+        // Initialize
+        loadCameras();
+        setInterval(updateStats, 1000);
+
+        function loadCameras() {
+            fetch('/api/cameras/config')
+                .then(r => r.json())
+                .then(data => {
+                    cameras = data.cameras || [];
+                    renderCameras();
+                });
+        }
+
+        function renderCameras() {
+            const grid = document.getElementById('camerasGrid');
+            grid.innerHTML = '';
+
+            cameras.forEach(camera => {
+                if (!camera.enabled) return;
+
+                const card = document.createElement('div');
+                card.className = 'camera-card';
+
+                card.innerHTML = `
+                    <div class="camera-thumbnail">
+                        <img src="/camera/stream/${camera.id}?t=${Date.now()}" 
+                             alt="${camera.name}"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div class="camera-offline" style="display: none;">
+                            Offline
+                        </div>
+                    </div>
+                    <div class="camera-info">
+                        <div class="camera-name">${camera.name}</div>
+                        <div class="camera-stats">
+                            <span>People: <span id="people-${camera.id}">0</span></span>
+                            <span>FPS: <span id="fps-${camera.id}">--</span></span>
+                            <span id="status-${camera.id}" class="status-inactive">●</span>
+                        </div>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function updateStats() {
+            fetch('/api/cameras/stats')
+                .then(r => r.json())
+                .then(data => {
+                    let activeCams = 0;
+                    let totalFps = 0;
+                    let fpsCount = 0;
+                    let totalPeople = 0;
+
+                    Object.entries(data).forEach(([cameraId, stats]) => {
+                        const peopleEl = document.getElementById(`people-${cameraId}`);
+                        const fpsEl = document.getElementById(`fps-${cameraId}`);
+                        const statusEl = document.getElementById(`status-${cameraId}`);
+
+                        const personsDetected = stats.persons_detected || 0;
+                        const fps = stats.fps || 0;
+                        const isActive = stats.status === 'active';
+
+                        if (peopleEl) peopleEl.textContent = personsDetected;
+                        if (fpsEl) fpsEl.textContent = fps > 0 ? Math.round(fps) : '--';
+                        
+                        if (statusEl) {
+                            if (isActive) {
+                                statusEl.className = 'status-active';
+                                activeCams++;
+                            } else {
+                                statusEl.className = 'status-inactive';
+                            }
+                        }
+
+                        totalPeople += personsDetected;
+
+                        if (fps > 0) {
+                            totalFps += fps;
+                            fpsCount++;
+                        }
+                    });
+
+                    document.getElementById('totalPeople').textContent = totalPeople;
+
+                    const activeCamsEl = document.getElementById('activeCameras');
+                    activeCamsEl.textContent = activeCams;
+                    activeCamsEl.className = activeCams > 0 ? 'status-active' : 'status-inactive';
+
+                    const avgFps = fpsCount > 0 ? Math.round(totalFps / fpsCount) : 0;
+                    document.getElementById('avgFps').textContent = avgFps || '--';
+                })
+                .catch(err => console.error('Failed to update camera stats:', err));
+        }
+    </script>
+</body>
+</html>
+
