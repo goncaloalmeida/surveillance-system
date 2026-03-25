@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# YOLO model (auto-downloaded)
+*.pt
+
+# Temporary runtime data
+temp/
+
+# Private reference images (keep folder structure only)
+reference_faces/*
+!reference_faces/.gitkeep
+!reference_faces/README.txt
+
+# Legacy faces directory — use reference_faces/ instead
+faces/

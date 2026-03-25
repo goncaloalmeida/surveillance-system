@@ -1,0 +1,157 @@
+{
+  "_comment": "Public demo configuration for the surveillance system",
+  "_version": "3.0",
+  
+  "server": {
+    "host": "127.0.0.1",
+    "_host_note": "Use 127.0.0.1 for local-only demos or 0.0.0.0 to expose the app on your network.",
+    "port": 8080,
+    "threads": 8
+  },
+  
+  "logging": {
+    "mode": "both",
+    "_mode_note": "Options: console, file, both",
+    "level": "INFO",
+    "_level_note": "DEBUG | INFO | WARNING | ERROR | CRITICAL",
+    "file": "temp/surveillance.log",
+    "max_age_days": 30
+  },
+  
+  "recognition": {
+    "_note": "Balanced defaults for a public demo. Tune them for your environment.",
+    
+    "model": "Facenet512",
+    "_model_options": {
+      "Facenet512": "Recommended - Balanced accuracy/speed (threshold: 0.40)",
+      "ArcFace": "High accuracy (threshold: 0.68)",
+      "VGG-Face": "Fast processing (threshold: 0.40)",
+      "Facenet": "Standard (threshold: 0.40)",
+      "OpenFace": "Lightweight (threshold: 0.10)",
+      "DeepFace": "Alternative (threshold: 0.23)",
+      "DeepID": "Specialized (threshold: 0.015)",
+      "Dlib": "Traditional (threshold: 0.07)",
+      "SFace": "Modern (threshold: 0.593)"
+    },
+    
+    "models": ["Facenet512"],
+    "_models_note": "Use a single model by default. Add more models only if you need ensemble voting.",
+    
+    "threshold": 0.40,
+    "_threshold_note": "Lower values are stricter and reduce false positives.",
+    
+    "cooldown_minutes": 10,
+    "_cooldown_note": "Minutes before same person can be re-detected",
+    
+    "detector_backend": "mtcnn",
+    "_detector_note": "MTCNN is slower but usually more reliable for reference image alignment.",
+    
+    "distance_metric": "cosine",
+    "_distance_note": "cosine (default) | euclidean | euclidean_l2",
+    
+    "align": true,
+    "normalization": "base"
+  },
+  
+  "performance": {
+    "workers": 2,
+    "_workers_note": "Recognition threads. Increase only if your machine has enough CPU and RAM.",
+    
+    "embedding_workers": 1,
+    "_embedding_workers_note": "Keep this low to avoid loading multiple heavy models in parallel.",
+    
+    "frame_skip": 5,
+    "_frame_skip_note": "Process every Nth frame. Lower is more accurate, higher is cheaper.",
+    "_frame_skip_guide": {
+      "1": "All frames (slowest)",
+      "5": "High accuracy",
+      "10": "Balanced",
+      "15": "Lower CPU usage",
+      "20": "Fastest, but may miss detections"
+    },
+    "_frame_skip_default": 5,
+    
+    "yolo": {
+      "model": "yolov8n.pt",
+      "_model_note": "yolov8n=fastest | yolov8s=balanced | yolov8m=higher accuracy",
+      
+      "imgsz": 320,
+      "_imgsz_note": "Lower resolutions are faster. Increase only if you need better distance detection.",
+      
+      "conf": 0.55,
+      "_conf_note": "Lower values catch more candidates but can increase noise.",
+      
+      "max_det": 5,
+      "_max_det_note": "Maximum number of person detections per frame."
+    }
+  },
+  
+  "yolo_model": "yolov8n.pt",
+  "jpeg_quality": 85,
+  "_jpeg_quality_note": "Stream quality 1-100. 60=low | 80=balanced | 95=high",
+  
+  "advanced": {
+    "_note": "Embeddings stay in RAM for fast matching. The disk cache only avoids reprocessing unchanged files.",
+    
+    "hash_deduplication": true,
+    "hash_expiry_seconds": 300,
+    "queue_maxsize": 500,
+    "save_unrecognized_faces": false,
+    "unrecognized_threshold": 0.75
+  },
+  
+  "_presets": {
+    "_note": "Reference configurations for different deployment profiles",
+    
+    "high_accuracy": {
+      "description": "Maximum accuracy - ensemble voting (high CPU/RAM)",
+      "recognition": {"models": ["Facenet512", "ArcFace", "VGG-Face"], "threshold": 0.40},
+      "performance": {"workers": 1, "frame_skip": 5, "yolo": {"model": "yolov8m.pt", "imgsz": 416}}
+    },
+    
+    "current": {
+      "description": "Balanced performance (recommended)",
+      "recognition": {"model": "Facenet512", "threshold": 0.40},
+      "performance": {"workers": 4, "frame_skip": 10, "yolo": {"model": "yolov8n.pt", "imgsz": 256}}
+    },
+    
+    "low_resources": {
+      "description": "Fast processing - low CPU usage",
+      "recognition": {"model": "VGG-Face", "threshold": 0.40},
+      "performance": {"workers": 2, "frame_skip": 15, "yolo": {"model": "yolov8n.pt", "imgsz": 256, "conf": 0.7}}
+    },
+    
+    "ensemble_voting": {
+      "description": "Dual model voting - better accuracy",
+      "recognition": {"models": ["Facenet512", "ArcFace"], "threshold": 0.40},
+      "performance": {"workers": 2, "frame_skip": 10, "yolo": {"model": "yolov8n.pt", "imgsz": 256}}
+    }
+  },
+  
+  "cameras": [
+    {
+      "id": "lobby_entrance",
+      "name": "Lobby Entrance",
+      "ip": "192.168.1.10",
+      "username": "YOUR_USERNAME",
+      "password": "YOUR_PASSWORD",
+      "enabled": false
+    },
+    {
+      "id": "loading_bay",
+      "name": "Loading Bay",
+      "ip": "192.168.1.11",
+      "username": "YOUR_USERNAME",
+      "password": "YOUR_PASSWORD",
+      "enabled": false
+    },
+    {
+      "id": "side_corridor",
+      "name": "Side Corridor",
+      "ip": "192.168.1.12",
+      "username": "YOUR_USERNAME",
+      "password": "YOUR_PASSWORD",
+      "enabled": false
+    }
+  ]
+}
