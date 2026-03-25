@@ -1,14 +1,27 @@
 # surveillance-system
 Computer vision surveillance with AI detection, real-time person detection, face recognition, and a web dashboard.
-This public repository is a sanitized showcase version. It was iterated quickly in a vibe-coding workflow and then hardened for public release.
+It was iterated in a vibe-coding workflow.
+
+## Built With
+| Library | Role |
+|---|---|
+| [Ultralytics YOLOv8](https://github.com/ultralytics/ultralytics) | Real-time person detection |
+| [DeepFace](https://github.com/serengil/deepface) | Face recognition and embedding generation |
+| [OpenCV](https://github.com/opencv/opencv-python) | Frame capture, decoding, and image processing |
+| [Flask](https://github.com/pallets/flask) | Web server and REST API |
+| [Waitress](https://github.com/Pylons/waitress) | Production WSGI server |
+| [NumPy](https://github.com/numpy/numpy) | Numerical operations on embeddings |
+| [SciPy](https://github.com/scipy/scipy) | Cosine distance for similarity matching |
+| [Pillow](https://github.com/python-pillow/Pillow) | Image loading and preprocessing |
+| [TF-Keras](https://github.com/keras-team/keras) | Backend for DeepFace model inference |
 
 ## Features
-- Real-time person detection via YOLO
-- Face recognition pipeline with DeepFace embeddings
-- Multi-camera ingest with per-camera stats
-- Live dashboard with detections, events, and stream wall
-- Configurable thresholds, cooldown, and performance tuning
-- Centralized logging with console/file modes
+- Real-time person detection via YOLO on multi-camera RTSP streams
+- Face recognition pipeline with DeepFace embeddings (Facenet512, ArcFace, ensemble)
+- Per-camera detection stats with cooldown-based deduplication
+- Live dashboard with recent detections, camera status, and event history
+- Configurable thresholds, frame skip, and worker threads
+- Centralized logging with console/file/both modes
 
 ## Project Layout
 ```text
@@ -73,10 +86,3 @@ This system was validated on a simple LAN setup:
 - **Stream format**: `rtsp://<user>:<pass>@<camera-ip>:554/stream1`
 
 The recognition pipeline ran in real-time at the default `frame_skip: 5` setting with no dropped frames.
-
-## Privacy and Public Release
-This repo excludes personal images and private infrastructure details by design.
-Recommended practice for your own deployments:
-- Never commit real credentials
-- Keep personal reference images out of version control
-- Use private secrets management for production camera credentials
