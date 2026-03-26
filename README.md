@@ -2,6 +2,8 @@
 Computer vision surveillance with AI detection, real-time person detection, face recognition, and a web dashboard.
 It was iterated in a vibe-coding workflow.
 
+![Screenshot](./web/static/assets/screenshot.png)
+
 ## Built With
 | Library | Role |
 |---|---|
